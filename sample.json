@@ -1,5 +1,25 @@
 {
-    "fullName": "Shivaji",
-    "address": "From Earth",
-    "mobile": "123456789"
+    "users": [{
+            "fullName": "Shivaji",
+            "address": "From Earth",
+            "mobile": "123456789"
+        },
+        {
+            "fullName": "Shivaji1",
+            "address": "From Earth",
+            "mobile": "123456789"
+        }, {
+            "fullName": "Shivaji2",
+            "address": "From Earth",
+            "mobile": "123456789"
+        }, {
+            "fullName": "Shivaji3",
+            "address": "From Earth",
+            "mobile": "123456789"
+        }, {
+            "fullName": "Shivaji4",
+            "address": "From Earth",
+            "mobile": "123456789"
+        }
+    ]
 }
