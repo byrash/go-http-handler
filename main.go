@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
+var Queue chan Payload
+
 func main() {
+	var MAX_QUEUE_BUFFER = 5
+	Queue = make(chan Payload, MAX_QUEUE_BUFFER)
 	http.HandleFunc("/", func(respWritter http.ResponseWriter, request *http.Request) {
 
 		// Only accept posts
@@ -32,16 +36,25 @@ func main() {
 		log.Printf("Paylod received %v", paylodCollection)
 
 		for _, payload := range paylodCollection.Payloads {
-			go func(data Payload) {
-				err := data.Upload()
-				if err != nil {
-					log.Printf("Error uploading Paylod %v", err)
-				}
-			}(payload)
+			Queue <- payload
 		}
 		respWritter.WriteHeader(http.StatusOK) // All good!!
 	})
+	go startUpload()
 	http.ListenAndServe(":80", nil)
+
+}
+
+func startUpload() {
+	for { // For ever
+		select { // Synchronously: Wait for paylods to be added to queue to process
+		case paylod := <-Queue:
+			err := paylod.Upload()
+			if err != nil {
+				log.Printf("Error uploading Paylod %v", err)
+			}
+		}
+	}
 }
 
 func badRequestHandler(respWritter http.ResponseWriter, err error) {
