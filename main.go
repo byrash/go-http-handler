@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,14 +23,23 @@ func main() {
 			return
 		}
 		log.Println(string(body))
-		var paylod PayloadCollection
-		err = json.Unmarshal(body, &paylod)
+		var paylodCollection PayloadCollection
+		err = json.Unmarshal(body, &paylodCollection)
 		if err != nil {
 			badRequestHandler(respWritter, err)
 			return
 		}
-		log.Printf("Paylod received %v", paylod)
-		fmt.Fprintf(respWritter, "Hello %v", "Shivaji!!!")
+		log.Printf("Paylod received %v", paylodCollection)
+
+		for _, payload := range paylodCollection.Payloads {
+			go func(data Payload) {
+				err := data.Upload()
+				if err != nil {
+					log.Printf("Error uploading Paylod %v", err)
+				}
+			}(payload)
+		}
+		respWritter.WriteHeader(http.StatusOK) // All good!!
 	})
 	http.ListenAndServe(":80", nil)
 }

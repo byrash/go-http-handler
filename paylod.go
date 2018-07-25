@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,14 +25,16 @@ type Payload struct {
 }
 
 const (
-	S3StorageFolder = "test"
+	S3StorageFolder = "paylod-upload"
 	ACLPrivate      = "private"
 	ContentType     = "application/octet-stream"
+	DefaultRegion   = "ap-southeast-2"
 )
 
 //Upload the paylod to storage
 func (payload *Payload) Upload() error {
-	var fileName = fmt.Sprintf("%v/%v", "test_", time.Now().UnixNano())
+	var fileName = fmt.Sprintf("%v%v", "test_", time.Now().UnixNano())
+	log.Printf("File Name decided to be %v", fileName)
 	b := new(bytes.Buffer)
 	encodeErr := json.NewEncoder(b).Encode(payload)
 	if encodeErr != nil {
@@ -44,6 +47,5 @@ func (payload *Payload) Upload() error {
 		Body:        b,
 		Key:         aws.String(fileName),
 	}
-	// return bucket.PutReader(storage_path, b, int64(b.Len()), contentType, acl, s3.Options{})
 	return UploadToS3(&uploadInput)
 }
