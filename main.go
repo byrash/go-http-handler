@@ -10,10 +10,13 @@ import (
 
 func main() {
 	http.HandleFunc("/", func(respWritter http.ResponseWriter, request *http.Request) {
-		fmt.Println(ioutil.ReadAll(request.Body))
-		jsonDecoder := json.NewDecoder(request.Body)
+		body, err := ioutil.ReadAll(request.Body)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(string(body))
 		var paylod Payload
-		err := jsonDecoder.Decode(&paylod)
+		err = json.Unmarshal(body, &paylod)
 		if err != nil {
 			panic(err)
 		}

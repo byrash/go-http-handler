@@ -20,7 +20,7 @@ type PayloadCollection struct {
 type Payload struct {
 	Name         string `json:"fullName"`
 	Address      string `json:"address"`
-	MobileNumber int64  `json:"mobile"`
+	MobileNumber string `json:"mobile"`
 }
 
 const (
