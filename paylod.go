@@ -33,7 +33,7 @@ const (
 
 //Upload the paylod to storage
 func (payload *Payload) Upload() error {
-	var fileName = fmt.Sprintf("%v%v", "test_", time.Now().UnixNano())
+	var fileName = fmt.Sprintf("%v%v.json", "paylod_", time.Now().UnixNano())
 	log.Printf("File Name decided to be %v", fileName)
 	b := new(bytes.Buffer)
 	encodeErr := json.NewEncoder(b).Encode(payload)
