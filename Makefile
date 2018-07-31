@@ -1,4 +1,4 @@
 .phony: run
 
 run: 
-	go run main.go paylod.go s3-file-upload.go worker.go dispatcher.go
+	go run main.go paylod.go aws-setup.go worker.go dispatcher.go

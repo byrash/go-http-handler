@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
+
+	"github.com/google/go-cloud/blob"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -14,14 +18,26 @@ type Worker struct {
 	WorkerPool chan chan Job
 	JobChannel chan Job
 	quit       chan bool
+	bucket     *blob.Bucket
+	ctx        context.Context
 }
 
 func NewWorker(workerPool chan chan Job) Worker {
+	ctx := context.Background()
+	//Setup AWS using go cloud
+	//One session per worker
+	bucket, err := SetupAws(ctx, S3StorageBucketName)
+	if err != nil {
+		panic(errors.Wrap(err, "Unable to setup AWS Sessions"))
+	}
 	return Worker{
 		WorkerPool: workerPool, // Holding to worker pool recived from Dispatcher, which is channel
 		//of Job Queue ( channel of jobs )
 		JobChannel: make(chan Job), // Only one job at a time to process by worker
-		quit:       make(chan bool)}
+		quit:       make(chan bool),
+		bucket:     bucket,
+		ctx:        ctx,
+	}
 }
 
 // Start method starts the run loop for the worker, listening for a quit channel in
@@ -39,7 +55,7 @@ func (w Worker) Start() {
 
 			case job := <-w.JobChannel: // Once a job is placed onto this workers job queue pick it up and start working
 				// This works in conjunction with worker pool above. i.e. we sharing the workers queue to the worker pool.
-				if err := job.Payload.Upload(); err != nil {
+				if err := job.Payload.Upload(w.bucket, w.ctx); err != nil {
 					log.Printf("Error uploading : %s", err.Error())
 				}
 

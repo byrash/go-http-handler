@@ -2,14 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/google/go-cloud/blob"
+	"github.com/pkg/errors"
 )
 
 //PayloadCollection records
@@ -25,27 +25,40 @@ type Payload struct {
 }
 
 const (
-	S3StorageFolder = "paylod-upload"
-	ACLPrivate      = "private"
-	ContentType     = "application/octet-stream"
-	DefaultRegion   = "ap-southeast-2"
+	S3StorageBucketName = "paylod-upload"
+	ACLPrivate          = "private"
+	DefaultContentType  = "application/octet-stream"
+	// DefaultRegion   = "ap-southeast-2"
 )
 
 //Upload the paylod to storage
-func (payload *Payload) Upload() error {
+func (payload *Payload) Upload(bucket *blob.Bucket, ctx context.Context) error {
+	//Generate file name
 	var fileName = fmt.Sprintf("%v%v.json", "paylod_", time.Now().UnixNano())
 	log.Printf("File Name decided to be %v", fileName)
+	//Encode payload object to JSON object
 	b := new(bytes.Buffer)
 	encodeErr := json.NewEncoder(b).Encode(payload)
 	if encodeErr != nil {
-		return encodeErr
+		return errors.Wrap(encodeErr, "Unable to encode payload to JSON")
 	}
-	uploadInput := s3manager.UploadInput{
-		ACL:         aws.String(ACLPrivate),
-		Bucket:      aws.String(S3StorageFolder),
-		ContentType: aws.String(ContentType),
-		Body:        b,
-		Key:         aws.String(fileName),
+	// Create a new bucket writter usng go-cloud
+	//TODO: Cant find a way to supply ACL
+	writerOptions := &blob.WriterOptions{ContentType: DefaultContentType}
+	bucketWriter, bucketWriterErr := bucket.NewWriter(ctx, fileName, writerOptions)
+	if bucketWriterErr != nil {
+		return errors.Wrap(bucketWriterErr, "Error creating bucket writter")
 	}
-	return UploadToS3(&uploadInput)
+	//Write bytes to bucket using bucket writter
+	_, writeErr := bucketWriter.Write(b.Bytes())
+	if writeErr != nil {
+		return errors.Wrap(writeErr, "Unable to write to bucket")
+	}
+	//Close the writter
+	bucketWriterCloseErr := bucketWriter.Close()
+	if bucketWriterCloseErr != nil {
+		return errors.Wrap(bucketWriterCloseErr, "Error closing the bucket")
+	}
+	log.Printf("Succesfully uploaded %v to Cloud", fileName)
+	return nil
 }

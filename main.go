@@ -17,6 +17,16 @@ type Job struct {
 var jobQueue chan Job
 
 func main() {
+	// cloud := flag.String("cloud", "aws", "Cloud storgae to use")
+	// log.Printf("Using cloud %v", cloud)
+	// if !strings.EqualFold(*cloud, "aws") {
+	// 	panic(errors.New("Only AWS supported at this moment"))
+	// }
+	// flag.Parse()
+	// if flag.NArg() != 1 {
+	// 	log.Fatal("No cloud specified")
+	// }
+	// file := flag.Arg(0)
 	var maxJobQueueBuffer = 5
 	jobQueue = make(chan Job, maxJobQueueBuffer)
 	http.HandleFunc("/", handleRequest)
